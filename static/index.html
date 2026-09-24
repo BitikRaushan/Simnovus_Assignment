@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Device Fleet Monitor</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         Roboto, Helvetica, Arial, sans-serif;
+            background: #0b0b0f;
+            color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 32px;
+        }
+
+        /* Header */
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #7c3aed;
+            font-size: 21px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #8f8f98;
+            margin-top: 5px;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 14px;
+            border-radius: 20px;
+            background: #15151b;
+            color: #bdbdc7;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        /* Summary cards */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: #16161b;
+            border: 1px solid #25252d;
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .card-title {
+            color: #9999a3;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .card-value {
+            font-size: 34px;
+            font-weight: 700;
+        }
+
+        .online {
+            color: #22c55e;
+        }
+
+        .offline {
+            color: #ef4444;
+        }
+
+        /* Device section */
+
+        .section {
+            background: #16161b;
+            border: 1px solid #25252d;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 22px 24px;
+            border-bottom: 1px solid #25252d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 19px;
+            font-weight: 600;
+        }
+
+        .last-updated {
+            color: #777781;
+            font-size: 13px;
+        }
+
+        /* Table */
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 16px 24px;
+            color: #777781;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 18px 24px;
+            border-top: 1px solid #222229;
+            font-size: 14px;
+        }
+
+        tr.device-row {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        tr.device-row:hover {
+            background: #1c1c23;
+        }
+
+        .device-id {
+            font-weight: 600;
+        }
+
+        .device-name {
+            color: #aaaab3;
+        }
+
+        /* Status badge */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 11px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.online {
+            background: rgba(34, 197, 94, 0.12);
+            color: #4ade80;
+        }
+
+        .badge.offline {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Empty/error */
+
+        .message {
+            padding: 40px;
+            text-align: center;
+            color: #85858f;
+        }
+
+        /* Modal */
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 500px;
+            background: #17171d;
+            border: 1px solid #292932;
+            border-radius: 18px;
+            padding: 26px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close {
+            border: none;
+            background: transparent;
+            color: #aaa;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid #282830;
+        }
+
+        .detail-label {
+            color: #888892;
+        }
+
+        .detail-value {
+            font-weight: 600;
+        }
+
+        /* Responsive */
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 18px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                align-items: flex-start;
+                gap: 15px;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+
+        <div class="brand">
+            <div class="logo">⚡</div>
+
+            <div>
+                <h1>Device Fleet Monitor</h1>
+                <div class="subtitle">
+                    Real-time overview of your device fleet
+                </div>
+            </div>
+        </div>
+
+        <div class="api-status">
+            <span class="status-dot"></span>
+            API Connected
+        </div>
+
+    </div>
+
+
+    <!-- Summary Cards -->
+
+    <div class="cards">
+
+        <div class="card">
+            <div class="card-title">TOTAL DEVICES</div>
+            <div class="card-value" id="total">0</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">ONLINE</div>
+            <div class="card-value online" id="online">0</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">OFFLINE</div>
+            <div class="card-value offline" id="offline">0</div>
+        </div>
+
+    </div>
+
+
+    <!-- Device Table -->
+
+    <div class="section">
+
+        <div class="section-header">
+
+            <div class="section-title">
+                Device Fleet
+            </div>
+
+            <div class="last-updated" id="updated">
+                Updating...
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Device ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Last Heartbeat</th>
+                    </tr>
+                </thead>
+
+                <tbody id="deviceTable">
+
+                    <tr>
+                        <td colspan="4">
+                            <div class="message">
+                                Loading devices...
+                            </div>
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Device Details Modal -->
+
+<div class="modal-overlay" id="modal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 id="modalTitle">
+                Device Details
+            </h2>
+
+            <button class="close" onclick="closeModal()">
+                ×
+            </button>
+
+        </div>
+
+        <div id="details"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /*
+     * Load fleet summary
+     */
+    async function loadSummary() {
+
+        try {
+
+            const response = await fetch("/summary");
+
+            if (!response.ok) {
+                throw new Error("Summary request failed");
+            }
+
+            const data = await response.json();
+
+            document.getElementById("total").textContent =
+                data.total;
+
+            document.getElementById("online").textContent =
+                data.online;
+
+            document.getElementById("offline").textContent =
+                data.offline;
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /*
+     * Format heartbeat time
+     */
+    function formatTime(timestamp) {
+
+        if (!timestamp) {
+            return "Never";
+        }
+
+        const date = new Date(timestamp);
+
+        if (isNaN(date.getTime())) {
+            return timestamp;
+        }
+
+        const seconds =
+            Math.floor((Date.now() - date.getTime()) / 1000);
+
+        if (seconds < 0) {
+            return "Just now";
+        }
+
+        if (seconds < 60) {
+            return `${seconds} sec ago`;
+        }
+
+        const minutes =
+            Math.floor(seconds / 60);
+
+        if (minutes < 60) {
+            return `${minutes} min ago`;
+        }
+
+        const hours =
+            Math.floor(minutes / 60);
+
+        return `${hours} hr ago`;
+    }
+
+
+    /*
+     * Load all devices
+     */
+    async function loadDevices() {
+
+        try {
+
+            const response = await fetch("/devices");
+
+            if (!response.ok) {
+                throw new Error("Device request failed");
+            }
+
+            const devices = await response.json();
+
+            const table =
+                document.getElementById("deviceTable");
+
+            if (!devices.length) {
+
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="4">
+                            <div class="message">
+                                No devices registered yet.
+                            </div>
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+
+            table.innerHTML = devices.map(device => {
+
+                const isOnline =
+                    String(device.status).toUpperCase() === "ONLINE";
+
+                return `
+                    <tr class="device-row"
+                        onclick="showDevice('${device.id}')">
+
+                        <td>
+                            <span class="device-id">
+                                ${escapeHtml(device.id)}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="device-name">
+                                ${escapeHtml(device.name || "-")}
+                            </span>
+                        </td>
+
+                        <td>
+
+                            <span class="badge ${isOnline ? "online" : "offline"}">
+
+                                <span class="badge-dot"></span>
+
+                                ${isOnline ? "ONLINE" : "OFFLINE"}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+                            ${formatTime(device.last_heartbeat)}
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join("");
+
+
+            document.getElementById("updated").textContent =
+                "Updated just now";
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            document.getElementById("deviceTable").innerHTML = `
+                <tr>
+                    <td colspan="4">
+                        <div class="message">
+                            Unable to load devices.
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+        }
+
+    }
+
+
+    /*
+     * Show individual device details
+     */
+    async function showDevice(deviceId) {
+
+        try {
+
+            const response =
+                await fetch(`/devices/${encodeURIComponent(deviceId)}`);
+
+            if (!response.ok) {
+                throw new Error("Device details request failed");
+            }
+
+            const device = await response.json();
+
+            document.getElementById("modalTitle").textContent =
+                device.name || device.id;
+
+            document.getElementById("details").innerHTML = `
+
+                <div class="detail">
+                    <span class="detail-label">Device ID</span>
+                    <span class="detail-value">
+                        ${escapeHtml(device.id)}
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">
+                        ${escapeHtml(device.status)}
+                    </span>
+                </div>
+
+                <div class="detail">
+                    <span class="detail-label">Last Heartbeat</span>
+                    <span class="detail-value">
+                        ${formatTime(device.last_heartbeat)}
+                    </span>
+                </div>
+
+                ${
+                    device.cpu_usage !== undefined
+                    ?
+                    `
+                    <div class="detail">
+                        <span class="detail-label">CPU Usage</span>
+                        <span class="detail-value">
+                            ${device.cpu_usage}%
+                        </span>
+                    </div>
+                    `
+                    :
+                    ""
+                }
+
+                ${
+                    device.signal_strength !== undefined
+                    ?
+                    `
+                    <div class="detail">
+                        <span class="detail-label">Signal Strength</span>
+                        <span class="detail-value">
+                            ${device.signal_strength} dBm
+                        </span>
+                    </div>
+                    `
+                    :
+                    ""
+                }
+
+            `;
+
+            document
+                .getElementById("modal")
+                .classList.add("show");
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert("Unable to load device details.");
+
+        }
+
+    }
+
+
+    /*
+     * Close details modal
+     */
+    function closeModal() {
+
+        document
+            .getElementById("modal")
+            .classList.remove("show");
+
+    }
+
+
+    /*
+     * Basic HTML escaping
+     */
+    function escapeHtml(value) {
+
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+    }
+
+
+    /*
+     * Refresh dashboard every 5 seconds
+     */
+    async function refreshDashboard() {
+
+        await Promise.all([
+            loadSummary(),
+            loadDevices()
+        ]);
+
+    }
+
+
+    // Initial load
+    refreshDashboard();
+
+    // Refresh every 5 seconds
+    setInterval(refreshDashboard, 5000);
+
+
+    // Close modal when clicking outside
+    document
+        .getElementById("modal")
+        .addEventListener("click", function(event) {
+
+            if (event.target === this) {
+                closeModal();
+            }
+
+        });
+
+</script>
+
+</body>
+</html>
