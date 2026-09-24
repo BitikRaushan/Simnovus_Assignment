@@ -161,7 +161,7 @@ No Node.js or separate frontend server is required because the dashboard uses HT
 Clone the repository:
 
 ```bash
-git clone <YOUR-GITHUB-REPOSITORY-URL>
+git clone <https://github.com/BitikRaushan/Simnovus_Assignment>
 cd device-fleet-monitor-fastapi
 ```
 
